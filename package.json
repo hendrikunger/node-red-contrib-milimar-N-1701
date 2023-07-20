@@ -1,0 +1,20 @@
+{
+  "name": "@aboutai/node-red-contrib-millimar-n-1701",
+  "version": "0.0.1",
+  "description": "Node-RED node to facilitate communication with Mahr Millimar modular measuring system",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha \"test/**/*_spec.js\""
+  },
+  "author": "Hendrik Unger",
+  "license": "ISC",
+  "node-red": {
+    "nodes": {
+      "lower-case": "lower-case.js"
+    }
+  },
+  "devDependencies": {
+    "node-red": "^3.0.2",
+    "node-red-node-test-helper": "^0.3.2"
+  }
+}
