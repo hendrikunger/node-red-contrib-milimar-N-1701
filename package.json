@@ -10,7 +10,8 @@
   "license": "ISC",
   "node-red": {
     "nodes": {
-      "lower-case": "lower-case.js"
+      "millimar input": "millimar-input.js",
+      "millimar-config": "millimar-device-config.js"
     }
   },
   "devDependencies": {
