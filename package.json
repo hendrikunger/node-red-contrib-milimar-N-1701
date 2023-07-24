@@ -17,5 +17,10 @@
   "devDependencies": {
     "node-red": "^3.0.2",
     "node-red-node-test-helper": "^0.3.2"
+  },
+  "dependencies": {
+    "ffi-napi": "^4.0.3",
+    "koffi": "^2.5.7",
+    "ref-array-napi": "^1.2.2"
   }
 }
