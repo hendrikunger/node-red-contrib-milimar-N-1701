@@ -1,87 +1,87 @@
-var ffi = require('ffi-napi');
+var koffi = require('koffi');
 var ref = require('ref-napi');
 var path = require('path');
+const { Console } = require('console');
+const { getMaxListeners } = require('events');
 
 var int = ref.types.int
 
-
 var platform = process.platform
 var n1700native = null
-var mathlib = null
-var primelib = null
+var libPath = null
+
+console.log('Running on Plattform %s with architecture %s', platform, process.arch)
 
 if (platform === "win32") {
     if (process.arch === "ia32" || process.arch === "x86") {
-        n1700native = "./lib/Win32/N1700.dll"
+        n1700native = "./lib/Win32/N1700"
+        libPath = './lib/Win32/';
     }
     else if (process.arch === "x64") {
-        n1700native = "./lib/Win32/N1700_64.dll"
+        n1700native = "./lib/Win64/N1700_64"
+        libPath = './lib/Win64/';
     }
     else {
         throw new Error("unsupported architecture for n1700lib")
     }
-    mathlib = "./lib/Win64/math.dll"
-    primelib = "./lib/Win64/prime.dll"
 } else if (platform === "linux") {
     //n1700native = "./math.so"
-    throw new Error("unsupported plateform for n1700lib")
+    throw new Error("unsupported plattform for n1700lib")
 } else if (platform === "darwin") {
     //n1700native = "./math.dylib"
     throw new Error("unsupported plateform for n1700lib")
 } else {
-  throw new Error("unsupported plateform for n1700lib")
+  throw new Error("unsupported plattform for n1700lib")
 }
 
-var math = ffi.Library(mathlib, {
-  add: [int, [int, int]],
-  minus: [int, [int, int]],
-  multiply: [int, [int, int]],
-})
-
-var result = null
-
-result = math.add(5, 2)
-console.log("5+2=" + result)
-
-result = math.minus(5, 2)
-console.log("5-2=" + result)
-
-result = math.multiply(5, 2)
-console.log("5*2=" + result)
 
 
-var ArrayType = require('ref-array-napi');
-var IntArray = ArrayType(ref.types.int);
-var a = new IntArray(20); // creates an integer array of size 10
-console.log(a.length); // 10
+var oldPath = process.env.PATH;
 
-var libprime = ffi.Library(primelib, {
-    'getPrimes': [ int, [ int, IntArray] ]
-  })
 
-// var count = libprime.getPrimes(50, a);
-// var primes = a.toArray().slice(0, count);
+process.env['PATH'] = `${process.env.PATH}${path.delimiter}${libPath}`;
+const n1700 = koffi.load(n1700native);
+process.env['PATH'] = oldPath;
 
-// console.log(primes);
 
 var bool = ref.types.bool
 var uint32 = ref.types.uint32
 var uint32Ptr = ref.refType(uint32)
 var int32 = ref.types.int32
-n1700native = "./N1700_64.dll"
-console.log(n1700native)
 
-// Define the C function signature
-const F_N1700InitializeLibrary = ffi.Function('int', ['bool', 'pointer', 'pointer', 'int32']);
 
-// var RTLD_NOW = ffi.DynamicLibrary.FLAGS.RTLD_NOW;
-// var RTLD_GLOBAL = ffi.DynamicLibrary.FLAGS.RTLD_GLOBAL;
-// var mode = RTLD_NOW | RTLD_GLOBAL;
-// var libs =  ffi.DynamicLibrary(n1700native, mode);
+const N1700InitializeLibrary = n1700.func('int __stdcall N1700InitializeLibrary(bool Console, _Out_ uint32 *NumModules, _Out_ uint32 *NumChannels, int32 Par)');
+const N1700FreeLibrary  = n1700.func('int __stdcall N1700FreeLibrary()');
+const N1700GetNumModules  = n1700.func('int __stdcall N1700GetNumModules()');
+const N1700GetNumChannels  = n1700.func('int __stdcall N1700GetNumChannels()');
 
-const  n1700 = ffi.Library(n1700native, {
-    N1700InitializeLibrary: [ F_N1700InitializeLibrary, ['bool', 'pointer', 'pointer', 'int32'] ]
-  })
+
+let modules = [5];
+let channels = [5];
+var ret = -5;
+ret = N1700InitializeLibrary(true, modules, channels, 0);
+
+console.log("modules", modules[0]);
+console.log("channels", channels[0]);
+console.log("ret", ret);
+
+var ret = -5;
+ret = N1700GetNumModules();
+console.log("N1700GetNumModules ", ret);
+
+var ret = -5;
+ret = N1700GetNumChannels();
+console.log("N1700GetNumChannels ", ret);
+
+var ret = -5;
+ret = N1700FreeLibrary();
+console.log("N1700FreeLibrary ", ret);
+
+
+
+
+
+
 
 
 
