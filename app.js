@@ -61,9 +61,10 @@ let channels = [5];
 var ret = -5;
 ret = N1700InitializeLibrary(true, modules, channels, 0);
 
-console.log("modules", modules[0]);
-console.log("channels", channels[0]);
-console.log("ret", ret);
+console.log("modules");
+console.log("channels");
+console.log("N1700InitializeLibrary: %s, Number of Modules: %s, Number of Channels: %s", ret, modules[0], channels[0]);
+
 
 var ret = -5;
 ret = N1700GetNumModules();
