@@ -136,6 +136,8 @@ const N1700StopContinuousRequestAllData  = n1700.func('int __stdcall N1700StopCo
 const N1700RequestData = n1700.func('int __stdcall N1700RequestData(int numChannels, uint32* pchannelIdxArray, int par)');
 const N1700RequestAllData = n1700.func('int __stdcall N1700RequestAllData(int par)');
 
+
+// Data Callback funktioniert nicht- nur erweitertes Datacallback
 const N1700DataCallback = koffi.proto('int __stdcall N1700DataCallback (int numChannels, int *pChannelIdxArray, double* pData, int pContext)');
 const N1700RegisterDataCallback= n1700.func('int __stdcall N1700RegisterDataCallback(N1700DataCallback *pCallback, int numChannels, int *pChannelIdxArray, int pContext)');
 const N1700UnregisterDataCallback = n1700.func('int __stdcall N1700UnregisterDataCallback(N1700DataCallback *pCallback)');
@@ -145,12 +147,14 @@ function onDataCallback(numChannels, pChannelIdxArray, data, context) {
     return 0;
 }
 
+let cb_koffi_DataHandle = koffi.register(onDataCallback, koffi.pointer(N1700DataCallback));
+
 const N1700ExtDataCallback = koffi.proto('int __stdcall N1700ExtDataCallback (int numData, sN1700_ChannelExtData* pData, int pContext)');
 const N1700RegisterExtDataCallback = n1700.func('int __stdcall N1700RegisterExtDataCallback(N1700ExtDataCallback *pCallback, int numChannels, int *pChannelIdxArray, int pContext)');
 const N1700UnregisterExtDataCallback = n1700.func('int __stdcall N1700UnregisterExtDataCallback(N1700ExtDataCallback *pCallback)');
 
 function onDataExtCallback(numData, DataDict, context) {
-    console.log('onDataExtCallback', channelIdxArray, data);
+    console.log('onDataExtCallback', numData, DataDict);
     return 0;
 }
 
@@ -245,7 +249,7 @@ function StartReadData(){
     console.log("Waited 1000 ms")
     var ret = -5;
     ret = N1700RequestData(4, ids, 0);
-    // ret = N1700StartContinuousRequestAllData(0, 0);
+    // ret = N1700StartContinuousRequestAllData(0, 0);  --> Bleibt hängen mit Timeout
     console.log("N1700StartContinuousRequestAllData ", ret);
 }
 
