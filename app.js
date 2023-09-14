@@ -36,69 +36,48 @@ var oldPath = process.env.PATH;
 
 
 process.env['PATH'] = `${process.env.PATH}${path.delimiter}${libPath}`;
+
 const n1700 = koffi.load(n1700native);
+console.log('Finished loading n1700lib')
 process.env['PATH'] = oldPath;
 
 const sN1700_Module  = koffi.struct('sN1700_Module',{ // 
 	ModuleId: 'uint32',// The Id of the Modul, sequence number
-
-	sFtDescription:  koffi.array('int', 40), // For internal use
-
-	sFtSerial:  koffi.array('int', 12), // For internal use
-
-	ModuleType: 'int', // Type of Module
-
-	sModuleType:  koffi.array('int', 24), // Type of Module as string // 20171207 New Size
-
-	sDescription:  koffi.array('int', 24) , // Name of Module as string, same as sModuleType // 20171207 New Size
-
-	sIdentNo:  koffi.array('int', 8) , // Ident Number of Module
-
-	sSerialNo:  koffi.array('int', 9) , // Serial Number of Module
-
-	sFirmwareVersion: koffi.array('int', 10) ,  // Firmware Version number of Module
-
-	ChannelCount: 'int' , // Count of Channels the module has
-
-	PowerModuleNeeded: 'int' , // If TRUE (1), there is a Power Module needed at position before this Module
-
+	sFtDescription:  koffi.array('int8', 40), // For internal use
+	sFtSerial:  koffi.array('int8', 12), // For internal use
+	ModuleType: 'int8', // Type of Module
+	sModuleType:  koffi.array('int8', 24), // Type of Module as string // 20171207 New Size
+	sDescription:  koffi.array('int8', 24) , // Name of Module as string, same as sModuleType // 20171207 New Size
+	sIdentNo:  koffi.array('int8', 8) , // Ident Number of Module
+	sSerialNo:  koffi.array('int8', 9) , // Serial Number of Module
+	sFirmwareVersion: koffi.array('int8', 10) ,  // Firmware Version number of Module
+	ChannelCount: 'int8' , // Count of Channels the module has
+	PowerModuleNeeded: 'int8' , // If TRUE (1), there is a Power Module needed at position before this Module
 	PowerConsumption_mA: 'short'  , // Power Consumption of Module, negative if Consumption, positiv if Supply (USB-Modul, Power Module)
-
 	ChannelIdxArray: koffi.array('uint32', 4)  // The Ids of the Channels included
 });
 
 const sN1700_Channel = koffi.struct('sN1700_Channel',{
 	ChannelIdx: 'uint32',  // The Id of the Channel
 	ParentModuleIdx: 'uint32' , // The Id of the Parent Module for accessing the Module-Parameters
-
-	tPortType: 'int' , // Type of Channel-Port (ptAnalog, ptDigital)
-
-	PortInCount: 'int' , // Count of Input Ports
-
-	PortOutCount: 'int' , // Count of Output Ports
-
+	tPortType: 'int8' , // Type of Channel-Port (ptAnalog, ptDigital)
+	PortInCount: 'int8' , // Count of Input Ports
+	PortOutCount: 'int8' , // Count of Output Ports
 	Decimals: 'int' , // Count of decimals for PortType ptAnalog. Can be Changed with Call of N1700SetDecimal
-
 	DigFilter: 'uint32' , // 20171207 New
-	CustomerCalibActive: 'int' , // 20171207 New
-
-	CustomerCalibrated: 'int' , // 20171207 New
-	FactoryCalibrated: 'int'  // 20171207 New
+	CustomerCalibActive: 'int8' , // 20171207 New
+	CustomerCalibrated: 'int8' , // 20171207 New
+	FactoryCalibrated: 'int8'  // 20171207 New
 });
 
 const sN1700_ChannelExtData = koffi.struct('sN1700_ChannelExtData',{
 	ChannelIdx: 'uint32',
-	ValueType: 'int',
-	Reserve1: koffi.array('int', 3) ,
+	ValueType: 'int8',
+	Reserve1: koffi.array('int8', 3) ,
 	dValue: 'double',
-	//        if Channel is an N 1704 I/O or N 17001 USB, the float value has to be converted to uint32,
-	//        the low  2 bytes are the digital outputs(Bit 0x0000 0001 ist Port 1, Bit 0x0000 0002 ist Port 2...
-	//        the high 2 bytes are the digital inputs (Bit 0x0001 0000 ist Port 1, Bit 0x0002 0000 ist Port 2...
-
-	ReferenceActive: 'int',
-	Referenced: 'int',
-
-	Reserve2: koffi.array('int', 14)
+	ReferenceActive: 'int8',
+	Referenced: 'int8',
+	Reserve2: koffi.array('int8', 14)
 });
 
 const WM_USER = 1024;
@@ -127,6 +106,7 @@ const WM_N1700_RefStat = WM_USER + 2000 + 19 // 1: RefStat Ok, 0: RefStat Not Ok
                                            
 const N1700InitializeLibrary = n1700.func('int __stdcall N1700InitializeLibrary(bool Console, _Out_ uint32 *NumModules, _Out_ uint32 *NumChannels, int32 Par)');
 const N1700FreeLibrary  = n1700.func('int __stdcall N1700FreeLibrary()');
+const N1700StopEngine  = n1700.func('int __stdcall N1700StopEngine()');
 const N1700GetNumModules  = n1700.func('int __stdcall N1700GetNumModules()');
 const N1700GetNumChannels  = n1700.func('int __stdcall N1700GetNumChannels()');
 const N1700GetModule  = n1700.func('int __stdcall N1700GetModule(uint32 ModuleIdx, _Out_ sN1700_Module* Module)');
@@ -149,12 +129,17 @@ function onDataCallback(numChannels, pChannelIdxArray, data, context) {
 
 let cb_koffi_DataHandle = koffi.register(onDataCallback, koffi.pointer(N1700DataCallback));
 
-const N1700ExtDataCallback = koffi.proto('int __stdcall N1700ExtDataCallback (int numData, sN1700_ChannelExtData* pData, int pContext)');
+const N1700ExtDataCallback = koffi.proto('int N1700ExtDataCallback (int numData, sN1700_ChannelExtData* pData, int pContext)');
 const N1700RegisterExtDataCallback = n1700.func('int __stdcall N1700RegisterExtDataCallback(N1700ExtDataCallback *pCallback, int numChannels, int *pChannelIdxArray, int pContext)');
 const N1700UnregisterExtDataCallback = n1700.func('int __stdcall N1700UnregisterExtDataCallback(N1700ExtDataCallback *pCallback)');
 
 function onDataExtCallback(numData, DataDict, context) {
-    console.log('onDataExtCallback', numData, DataDict);
+    let data = koffi.decode(DataDict, 'sN1700_ChannelExtData', numData)
+    console.log('onDataExtCallback ---------');
+    data.forEach(element => {
+        console.log(element.ChannelIdx, element.dValue);
+    });
+
     return 0;
 }
 
@@ -167,7 +152,7 @@ const N1700UnregisterMsgCallback = n1700.func('int __stdcall N1700UnregisterMsgC
 function onMsgCallback(msg, Channel, param) {
 	switch (msg) {
         case WM_N1700_Tick:
-            console.log("WM_N1700_Tick\r\n");
+            console.log("WM_N1700_Tick");
             break;
         case WM_N1700_ModuleCountChanged:
             console.log("WM_N1700_ModuleCountChanged", Channel, param);
@@ -202,14 +187,13 @@ function onMsgCallback(msg, Channel, param) {
 let cb_koffi_MsgHandle = koffi.register(onMsgCallback, koffi.pointer(N1700MsgCallback));
 
 
+
 let modules = [5];
 let channels = [5];
 
 var ret = -5;
 ret = N1700InitializeLibrary(true, modules, channels, 0);
 console.log("N1700InitializeLibrary: %s, Number of Modules: %s, Number of Channels: %s", ret, modules[0], channels[0]);
-
-
 
 var ret = -5;
 ret = N1700GetNumModules();
@@ -218,7 +202,6 @@ console.log("N1700GetNumModules ", ret);
 var nChannels = -5;
 nChannels = N1700GetNumChannels();
 console.log("N1700GetNumChannels ", nChannels);
-//console.log(Array.from({length: nChannels - 1}, (_, i) => i + 1));
 
 // var ret = -5;
 // var channelInfo = {}
@@ -226,14 +209,11 @@ console.log("N1700GetNumChannels ", nChannels);
 // console.log("N1700GetChannel ", ret);
 // console.log(channelInfo);
 
-// var ret = -5;
-// var ids = [0,1,2,3];
-// ret = N1700RegisterDataCallback(cb_koffi_DataHandle, 4, ids, 0);
-// console.log("N1700RegisterDataCallback ", ret);
-
 var ret = -5;
-var ids = [0,1,2,3];
-ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, 4, ids, 0);
+//var ids = Array.from({length: nChannels - 1}, (_, i) => i + 1) // [1-N]
+var ids = [...Array(nChannels).keys()]  // [0-N]
+
+ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, nChannels, ids, 0);
 console.log("N1700RegisterExtDataCallback ", ret);
 
 
@@ -241,48 +221,47 @@ var ret = -5;
 ret = N1700RegisterMsgCallback(cb_koffi_MsgHandle);
 console.log("N1700RegisterMsgCallback ", ret);
 
-console.log("Waiting 1000 ms")
-setTimeout(StartReadData, 1000);
+//console.log("Waiting 1000 ms")
+myInterval = setInterval(StartReadData, 10);
+setTimeout(CleanUp, 3000);
 
 
 function StartReadData(){
-    console.log("Waited 1000 ms")
+    //console.log("Waited 1000 ms")
     var ret = -5;
-    ret = N1700RequestData(4, ids, 0);
-    // ret = N1700StartContinuousRequestAllData(0, 0);  --> Bleibt hängen mit Timeout
+    //ret = N1700RequestData(4, ids, 0);
+    ret = N1700RequestAllData(0,0);
+    console.log("N1700RequestAllData ", ret);
+    //setTimeout(ContReadData, 1000);
+    
+    
+}
+
+function ContReadData(){
+    console.log("Waited 1000 ms again")
+    var ret = -5;
+    ret = N1700StartContinuousRequestAllData(0, 0);  //--> Bleibt hängen mit Timeout
     console.log("N1700StartContinuousRequestAllData ", ret);
 }
 
 
 
-
-
-setTimeout(CleanUp, 3000);
-
-
-
-
 function CleanUp(){
-
+    console.log("CleanUp");
+    clearInterval(myInterval);
     var ret = -5;
     ret = N1700StopContinuousRequestAllData();
     console.log("N1700StopContinuousRequestAllData ", ret);
-
     // N1700UnregisterDataCallback(cb_koffi_DataHandle)
     N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle)
     N1700UnregisterMsgCallback(cb_koffi_MsgHandle)
-
-        var ret = -5;
-    ret = N1700FreeLibrary();
-    console.log("N1700FreeLibrary ", ret);
-    
     // koffi.unregister(cb_koffi_DataHandle);
     koffi.unregister(cb_koffi_ExtDataHandle);
     koffi.unregister(cb_koffi_MsgHandle);
-    
     var ret = -5;
     ret = N1700FreeLibrary();
     console.log("N1700FreeLibrary ", ret);
+    n1700.unload();
 
 }
 
