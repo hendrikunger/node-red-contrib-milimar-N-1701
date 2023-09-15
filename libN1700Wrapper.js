@@ -120,21 +120,38 @@ const N1700ExtDataCallback = koffi.proto('int N1700ExtDataCallback (int numData,
 const N1700RegisterExtDataCallback = n1700.func('int __stdcall N1700RegisterExtDataCallback(N1700ExtDataCallback *pCallback, int numChannels, int *pChannelIdxArray, int pContext)');
 const N1700UnregisterExtDataCallback = n1700.func('int __stdcall N1700UnregisterExtDataCallback(N1700ExtDataCallback *pCallback)');
 
+var cbDataFunction = null;
+var cb_koffi_ExtDataHandle = null;
+
 function onDataExtCallback(numData, DataDict, context) {
     let data = koffi.decode(DataDict, 'sN1700_ChannelExtData', numData)
-    console.log('onDataExtCallback ---------');
-    data.forEach(element => {
-        console.log(element.ChannelIdx, element.dValue);
-    });
-
+    if (cbDataFunction){
+        cbDataFunction(data);
+    }
     return 0;
 }
 
-var cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback));
+
+function registerDataCallback(cbFunction, nchannels, ids) {
+    console.log("registerDataCallback", cbFunction);
+    cbDataFunction = cbFunction;
+    cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback));   
+    ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, nChannels, ids, 0);
+    console.log("N1700RegisterExtDataCallback ", ret); 
+}
+
+function unregisterDataCallback() {
+    if (cb_koffi_ExtDataHandle){
+        koffi.unregister(cb_koffi_ExtDataHandle);
+        cb_koffi_ExtDataHandle = null
+    }
+    console.log("unregisterDataCallback");
+}
 
 const N1700MsgCallback = koffi.proto('int __stdcall N1700MsgCallback (int msg, uint32 Channel, int param)');
 const N1700RegisterMsgCallback = n1700.func('int __stdcall N1700RegisterMsgCallback(N1700MsgCallback *pCallback)');
 const N1700UnregisterMsgCallback = n1700.func('int __stdcall N1700UnregisterMsgCallback()');
+
 
 function onMsgCallback(msg, Channel, param) {
 	switch (msg) {
@@ -174,6 +191,7 @@ function onMsgCallback(msg, Channel, param) {
 let cb_koffi_MsgHandle = koffi.register(onMsgCallback, koffi.pointer(N1700MsgCallback));
 
 
+
 function init() {
     let modules = [5];
     let channels = [5];
@@ -186,7 +204,10 @@ function init() {
     console.log("N1700GetNumModules ", nModules);
     nChannels = N1700GetNumChannels();
     console.log("N1700GetNumChannels ", nChannels);
+    return  nChannels;
 }
+
+
 
 function doStuff(){
     // var ret = -5;
@@ -198,20 +219,19 @@ function doStuff(){
     var ret = -5;
     var ids = [...Array(nChannels).keys()]  // [0-N]
 
-    ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, nChannels, ids, 0);
-    console.log("N1700RegisterExtDataCallback ", ret);
-
 
     var ret = -5;
     ret = N1700RegisterMsgCallback(cb_koffi_MsgHandle);
     console.log("N1700RegisterMsgCallback ", ret);
 
+
+
     //console.log("Waiting 1000 ms")
-    hInterval = setInterval(startReadData, 10);
+    hInterval = setInterval(readAllData, 1000);
     setTimeout(cleanUp, 3000);
 }
 
-function startReadData(){
+function readAllData(){
     //console.log("Waited 1000 ms")
     var ret = -5;
     //ret = N1700RequestData(4, ids, 0);
@@ -222,23 +242,13 @@ function startReadData(){
     
 }
 
-function contReadData(){
-    console.log("Waited 1000 ms again")
-    var ret = -5;
-    ret = N1700StartContinuousRequestAllData(0, 0);  //--> Bleibt hängen mit Timeout
-    console.log("N1700StartContinuousRequestAllData ", ret);
-}
+
 
 function cleanUp(){
     if (hInterval) {clearInterval(hInterval)};
-    var ret = -5;
-    ret = N1700StopContinuousRequestAllData();
-    console.log("N1700StopContinuousRequestAllData ", ret);
-    // N1700UnregisterDataCallback(cb_koffi_DataHandle)
     N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle)
     N1700UnregisterMsgCallback(cb_koffi_MsgHandle)
     // koffi.unregister(cb_koffi_DataHandle);
-    koffi.unregister(cb_koffi_ExtDataHandle);
     koffi.unregister(cb_koffi_MsgHandle);
 
 }
@@ -253,9 +263,14 @@ function destroy(){
 
 
 
+
+
 module.exports = {
     init,
     doStuff,
+    registerDataCallback,
+    unregisterDataCallback,
+    readAllData,
     destroy,
   };
 
