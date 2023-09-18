@@ -7,7 +7,7 @@ module.exports = function(RED) {
         this.host = n.host;
         this.port = n.port;
         this.libN1700Wrapper = libN1700Wrapper;
-        libN1700Wrapper.init();
+        this.nChannels = libN1700Wrapper.init();
 
         this.on('close', function() {
             libN1700Wrapper.destroy();

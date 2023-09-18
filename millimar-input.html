@@ -5,6 +5,7 @@
         defaults: {
             name: {value:""},
             device: {value:"", type:"millimar-device-config"},
+            updateIntervalMs: {value:"1000", required:true, validate:RED.validators.number()},
         },
         inputs:1,
         outputs:1,
@@ -21,12 +22,16 @@
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
-        <label for="node-input-device"><i class="fa fa-tag"></i> Device</label>
+        <label for="node-input-device"><i class="fa fa-cog"></i> Device</label>
         <input id="node-input-device" placeholder="Device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-updateIntervalMs"><i class="fa fa-clock-o"></i> Update (ms)</label>
+        <input type="num" id="node-input-updateIntervalMs" placeholder="1000 Ms">
     </div>
 </script>
 
 <script type="text/html" data-help-name="millimar input">
-    <p>A simple node that converts the message payloads into all lower-case characters</p>
+    <p>A Node that connects to a Mahr Millimar N 1701 USB Module and reads the measurement data from connected modules on the bus.</p>
 </script>
 
