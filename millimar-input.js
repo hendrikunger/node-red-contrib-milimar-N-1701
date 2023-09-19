@@ -23,8 +23,11 @@ module.exports = function(RED) {
 
         if (node.device  !== null) {
             node.libN1700Wrapper = node.device.libN1700Wrapper;
-            node.isDataCbRegistered = node.libN1700Wrapper.registerDataCallback(onExtDataExtCallback, node.device.nChannels, [...Array(node.device.nChannels).keys()]);
-            console.log(config.updateIntervalMs);
+            let channelList = config.channelPicker.split(',').map(Number);
+            channelList.unshift(0);
+            //node.isDataCbRegistered = node.libN1700Wrapper.registerDataCallback(onExtDataExtCallback, node.device.nChannels, [...Array(node.device.nChannels).keys()]);
+            console.log("channelList: ", channelList, channelList.length);
+            node.isDataCbRegistered = node.libN1700Wrapper.registerDataCallback(onExtDataExtCallback, channelList.length, channelList);
             if (config.updateIntervalMs > 0){
                 this.hInterval = setInterval(node.libN1700Wrapper.readAllData, config.updateIntervalMs);
             }
@@ -32,7 +35,6 @@ module.exports = function(RED) {
 
 
     node.on('input', function(msg) {
-            msg.payload = String(msg.payload) + "  " + node.device.host;
             if (node.libN1700Wrapper  !== null) {
                 node.libN1700Wrapper.readAllData()
             }

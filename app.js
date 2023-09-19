@@ -127,7 +127,7 @@ function onDataCallback(numChannels, pChannelIdxArray, data, context) {
     return 0;
 }
 
-let cb_koffi_DataHandle = koffi.register(onDataCallback, koffi.pointer(N1700DataCallback));
+var cb_koffi_DataHandle = koffi.register(onDataCallback, koffi.pointer(N1700DataCallback));
 
 const N1700ExtDataCallback = koffi.proto('int N1700ExtDataCallback (int numData, sN1700_ChannelExtData* pData, int pContext)');
 const N1700RegisterExtDataCallback = n1700.func('int __stdcall N1700RegisterExtDataCallback(N1700ExtDataCallback *pCallback, int numChannels, int *pChannelIdxArray, int pContext)');
@@ -143,7 +143,7 @@ function onDataExtCallback(numData, DataDict, context) {
     return 0;
 }
 
-let cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback));
+var cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback));
 
 const N1700MsgCallback = koffi.proto('int __stdcall N1700MsgCallback (int msg, uint32 Channel, int param)');
 const N1700RegisterMsgCallback = n1700.func('int __stdcall N1700RegisterMsgCallback(N1700MsgCallback *pCallback)');
@@ -184,7 +184,7 @@ function onMsgCallback(msg, Channel, param) {
 
     return 0;
 }
-let cb_koffi_MsgHandle = koffi.register(onMsgCallback, koffi.pointer(N1700MsgCallback));
+var cb_koffi_MsgHandle = koffi.register(onMsgCallback, koffi.pointer(N1700MsgCallback));
 
 
 
@@ -222,8 +222,8 @@ ret = N1700RegisterMsgCallback(cb_koffi_MsgHandle);
 console.log("N1700RegisterMsgCallback ", ret);
 
 //console.log("Waiting 1000 ms")
-myInterval = setInterval(StartReadData, 10);
-setTimeout(CleanUp, 3000);
+myInterval = setInterval(StartReadData, 100);
+setTimeout(CleanUp, 2000);
 
 
 function StartReadData(){
@@ -253,8 +253,10 @@ function CleanUp(){
     ret = N1700StopContinuousRequestAllData();
     console.log("N1700StopContinuousRequestAllData ", ret);
     // N1700UnregisterDataCallback(cb_koffi_DataHandle)
-    N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle)
-    N1700UnregisterMsgCallback(cb_koffi_MsgHandle)
+    ret = N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle)
+    console.log("N1700UnregisterExtDataCallback ", ret);
+    ret = N1700UnregisterMsgCallback(cb_koffi_MsgHandle)
+    console.log("N1700UnregisterMsgCallback ", ret);
     // koffi.unregister(cb_koffi_DataHandle);
     koffi.unregister(cb_koffi_ExtDataHandle);
     koffi.unregister(cb_koffi_MsgHandle);

@@ -133,20 +133,23 @@ function onDataExtCallback(numData, DataDict, context) {
 
 
 function registerDataCallback(cbFunction, nchannels, ids) {
-    console.log("registerDataCallback", cbFunction);
+    //console.log("registerDataCallback", cbFunction);
     cbDataFunction = cbFunction;
     cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback));   
     ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, nChannels, ids, 0);
-    console.log("N1700RegisterExtDataCallback ", ret);
+    //console.log("N1700RegisterExtDataCallback ", ret);
     return true;
 }
 
 function unregisterDataCallback() {
+    let ret = -5
     if (cb_koffi_ExtDataHandle){
+        //console.log("unregisterDataCallback", cb_koffi_ExtDataHandle);
+        ret = N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle);
         koffi.unregister(cb_koffi_ExtDataHandle);
-        cb_koffi_ExtDataHandle = null
+        //cb_koffi_ExtDataHandle = null
     }
-    console.log("unregisterDataCallback");
+    //console.log("unregisterDataCallback", ret);
 }
 
 const N1700MsgCallback = koffi.proto('int __stdcall N1700MsgCallback (int msg, uint32 Channel, int param)');
@@ -189,8 +192,7 @@ function onMsgCallback(msg, Channel, param) {
 
     return 0;
 }
-let cb_koffi_MsgHandle = koffi.register(onMsgCallback, koffi.pointer(N1700MsgCallback));
-
+var cb_koffi_MsgHandle = koffi.register(onMsgCallback, koffi.pointer(N1700MsgCallback));
 
 
 function init() {
@@ -199,32 +201,12 @@ function init() {
 
     var ret = -5;
     ret = N1700InitializeLibrary(true, modules, channels, 0);
-    console.log("N1700InitializeLibrary: %s, Number of Modules: %s, Number of Channels: %s", ret, modules[0], channels[0]);
-
+    //console.log("N1700InitializeLibrary: %s, Number of Modules: %s, Number of Channels: %s", ret, modules[0], channels[0]);
     nModules = N1700GetNumModules();
-    console.log("N1700GetNumModules ", nModules);
+    //console.log("N1700GetNumModules ", nModules);
     nChannels = N1700GetNumChannels();
-    console.log("N1700GetNumChannels ", nChannels);
+    //console.log("N1700GetNumChannels ", nChannels);
     return  nChannels;
-}
-
-
-
-function doStuff(){
-    // var ret = -5;
-    // var channelInfo = {}
-    // ret = N1700GetChannel(7, channelInfo);
-    // console.log("N1700GetChannel ", ret);
-    // console.log(channelInfo);
-
-    var ret = -5;
-    var ids = [...Array(nChannels).keys()]  // [0-N]
-
-
-    var ret = -5;
-    ret = N1700RegisterMsgCallback(cb_koffi_MsgHandle);
-    console.log("N1700RegisterMsgCallback ", ret);
-
 }
 
 function readAllData(){
@@ -236,19 +218,11 @@ function readAllData(){
 }
 
 
-
-function cleanUp(){
-    N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle)
-    N1700UnregisterMsgCallback(cb_koffi_MsgHandle)
-    // koffi.unregister(cb_koffi_DataHandle);
-    koffi.unregister(cb_koffi_MsgHandle);
-
-}
 function destroy(){
-    console.log("destroy");
+    //console.log("destroy");
     var ret = -5;
     ret = N1700FreeLibrary();
-    console.log("N1700FreeLibrary ", ret);
+    //console.log("N1700FreeLibrary ", ret);
 
 }
 
@@ -258,7 +232,6 @@ function destroy(){
 
 module.exports = {
     init,
-    doStuff,
     registerDataCallback,
     unregisterDataCallback,
     readAllData,

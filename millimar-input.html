@@ -6,13 +6,34 @@
             name: {value:""},
             device: {value:"", type:"millimar-device-config"},
             updateIntervalMs: {value:"1000", required:true, validate:RED.validators.number()},
+            channelPicker: {value: ""},
         },
         inputs:1,
         outputs:1,
         icon: "bridge.svg",
         label: function() {
             return this.name||"millimar input";
-        }
+        },
+
+        oneditprepare: function() {
+            $.getJSON('nChannels',function(remoteData) {
+                var info = remoteData || { "nChannels": 0};
+                let data =  [];
+                for (let i = 1; i < info.nChannels; i++) {
+                    data.push({ value: i, label: "Channel " + i});
+                }
+
+                $("#node-input-channelPicker").typedInput({
+                    types:[
+                            {
+                                multiple: "true",
+                                options: data,
+                            }
+                        ]
+                    });
+                });
+        },
+
     });
 </script>
 
@@ -29,9 +50,14 @@
         <label for="node-input-updateIntervalMs"><i class="fa fa-clock-o"></i> Update (ms)</label>
         <input type="num" id="node-input-updateIntervalMs" placeholder="1000 Ms">
     </div>
+    <div class="form-row">
+        <label for="node-input-channelPicker"><i class="fa fa-clock-o"></i> Pick Channels</label>
+        <input type="text" id="node-input-channelPicker">
+    </div>
 </script>
 
 <script type="text/html" data-help-name="millimar input">
     <p>A Node that connects to a Mahr Millimar N 1701 USB Module and reads the measurement data from connected modules on the bus.</p>
+    <p>Sending an input Message triggers a read from the device.</p>
 </script>
 
