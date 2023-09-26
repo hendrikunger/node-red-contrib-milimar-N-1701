@@ -21,3 +21,4 @@ libN1700Wrapper.registerDataCallback(onExtDataExtCallback, nChannels, [...Array(
 setTimeout(cleanUp, 3000);
 hInterval = setInterval(libN1700Wrapper.readAllData, 500);
 
+//test
