@@ -135,10 +135,16 @@ function onDataExtCallback(numData, DataDict, context) {
 function registerDataCallback(cbFunction, nchannels, ids) {
     //console.log("registerDataCallback", cbFunction);
     cbDataFunction = cbFunction;
-    cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback));   
-    ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, nChannels, ids, 0);
+    cb_koffi_ExtDataHandle = koffi.register(onDataExtCallback, koffi.pointer(N1700ExtDataCallback)); 
+    const count = Array.isArray(ids) ? nchannels : 0;  
+    ret = N1700RegisterExtDataCallback(cb_koffi_ExtDataHandle, count, ids, 0);
     //console.log("N1700RegisterExtDataCallback ", ret);
     return true;
+
+
+
+
+
 }
 
 function unregisterDataCallback() {
@@ -146,8 +152,9 @@ function unregisterDataCallback() {
     if (cb_koffi_ExtDataHandle){
         //console.log("unregisterDataCallback", cb_koffi_ExtDataHandle);
         ret = N1700UnregisterExtDataCallback(cb_koffi_ExtDataHandle);
-        koffi.unregister(cb_koffi_ExtDataHandle);
-        //cb_koffi_ExtDataHandle = null
+        try { koffi.unregister(cb_koffi_ExtDataHandle); } catch (e) {}
+        cb_koffi_ExtDataHandle = null;
+        cbDataFunction = null;
     }
     //console.log("unregisterDataCallback", ret);
 }
@@ -213,13 +220,17 @@ function readAllData(){
     //console.log("Waited 1000 ms")
     var ret = -5;
     //ret = N1700RequestData(4, ids, 0);
-    ret = N1700RequestAllData(0,0);
+    ret = N1700RequestAllData(0);
     // console.log("N1700RequestAllData ", ret);    
 }
 
 
 function destroy(){
     //console.log("destroy");
+    // Best-effort orderly shutdown; ignore individual failure codes
+    try { N1700StopContinuousRequestAllData(); } catch (e) {}
+    try { unregisterDataCallback(); } catch (e) {}
+    try { N1700StopEngine(); } catch (e) {}
     var ret = -5;
     ret = N1700FreeLibrary();
     //console.log("N1700FreeLibrary ", ret);

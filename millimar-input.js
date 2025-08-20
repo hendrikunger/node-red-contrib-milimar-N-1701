@@ -43,11 +43,16 @@ module.exports = function(RED) {
 
 
 
-        node.on('close', function() {
-            if (this.hInterval) {clearInterval(this.hInterval)};
-            node.libN1700Wrapper.unregisterDataCallback();
-
-        });
-    }
+    node.on('close', function(removed, done) {
+         try {
+             if (this.hInterval) { clearInterval(this.hInterval); }
+             if (node.libN1700Wrapper) {
+                 node.libN1700Wrapper.unregisterDataCallback();
+             }
+         } finally {
+             done();
+         }
+     });
+  }
     RED.nodes.registerType("millimar input",InputNode);
 }

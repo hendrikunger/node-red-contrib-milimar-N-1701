@@ -11,10 +11,13 @@ module.exports = function(RED) {
         this.nChannels = libN1700Wrapper.init();
         g_nChannels = this.nChannels;
 
-        this.on('close', function() {
-            libN1700Wrapper.destroy();
+        this.on('close', function(removed, done) {
+            // Defer destroy to allow any last unregister to finish
+            setImmediate(() => {
+                try { libN1700Wrapper.destroy(); }
+                finally { done(); }
+            });
         });
-
     }
     RED.nodes.registerType("millimar-device-config",MillimarConfigNode);
 
