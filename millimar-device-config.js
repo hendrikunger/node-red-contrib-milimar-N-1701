@@ -1,8 +1,11 @@
-
-libN1700Wrapper = require("./libN1700Wrapper");
-
 module.exports = function(RED) {
+    let libN1700Wrapper = null;
 
+    try {
+    libN1700Wrapper = require("./libN1700Wrapper");
+    } catch (e) {
+       RED.log.error("[millimar-device-config] Could not load libN1700Wrapper: " + e.message);
+    }
     var g_nChannels = -1;
 
     function MillimarConfigNode(n) {
